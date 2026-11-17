@@ -77,13 +77,14 @@ body.landing::before{display:none}
 .hero .go:hover{transform:translateY(-2px)}
 .hero .go::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.7),transparent);transform:skewX(-20deg)}
 /* thẻ mục */
-.hero .cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;max-width:640px;width:100%;margin:24px auto 0}
+.hero .cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;max-width:820px;width:100%;margin:24px auto 0}
 .hero .card{display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 10px;border-radius:16px;text-decoration:none;color:#FFF6EE;
   background:rgba(255,240,220,.09);border:1px solid rgba(242,196,109,.35);backdrop-filter:blur(3px);transition:background .2s,transform .2s}
 .hero .card:hover{background:rgba(255,240,220,.17);transform:translateY(-3px)}
 .hero .card .ic{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(180deg,#FFE09A,#E9A93F);color:#6E2511}
 .hero .card .ic svg{width:24px;height:24px}
 .hero .card b{font-size:15.5px}.hero .card small{font-size:12.5px;color:#FCE3C2;line-height:1.35}
+@media (max-width:640px){.hero .cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:480px){.hero .cards{gap:8px}.hero .card{padding:12px 6px}.hero .card small{display:none}}
 .hero .foot{margin-top:22px;font-size:12.5px;color:rgba(252,227,194,.8)}
 </style></head><body><title>Ôn tập HSK 1 3.0 · Tiếng Trung Dolin</title>
@@ -175,9 +176,11 @@ th:first-child,td:first-child{text-align:left}
 @media (prefers-reduced-motion:no-preference){.flash{transition:transform .15s}.flash:active{transform:scale(.99)}}
 </style>
 
+<link rel="stylesheet" href="phatam/phatam.css">
 <div class="bar"><div class="bar-in">
   <a href="#trang-dau" style="display:contents"><img src="logo.png" alt="Tiếng Trung Dolin"></a>
   <h1>Ôn tập HSK 1 3.0 · Tiếng Trung Dolin</h1>
+  <a href="#phat-am" id="nav-pa">Phát âm</a>
   <a href="#bai-hoc" id="nav-home">Bài học</a>
   <a href="#thi-thu" id="nav-exam">Thi thử</a>
   <a href="#bang-diem" id="nav-score">Bảng điểm</a>
@@ -186,6 +189,8 @@ th:first-child,td:first-child{text-align:left}
 
 <script src="data.js"></script>
 <script src="exam.js"></script>
+<script src="phatam/data.js"></script>
+<script src="phatam/phatam.js"></script>
 <script>
 (function(){
 const L=window.LESSONS||[], EX=window.EXAM||null, app=document.getElementById('app');
@@ -211,6 +216,7 @@ function playClip(src,seg){stopClip();const my=token;return new Promise(res=>{pe
     blobOf(src).then(u=>{if(my!==token){au.removeAttribute('data-src');return}au.src=u;au.addEventListener('canplay',go,{once:true});au.load()})}else go()})}
 const blobs={};
 function blobOf(src){return blobs[src]||(blobs[src]=fetch(src).then(r=>{if(!r.ok)throw 0;return r.blob()}).then(b=>URL.createObjectURL(b)).catch(()=>src))}
+window.HSK={$,esc,playClip,stopClip,save,get S(){return S}};
 const clip=(n,k)=>playClip('audio/L'+String(n).padStart(2,'0')+'.mp3',L[n-1].idx[k]);
 let ac=null;
 function beep(){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=880;g.gain.setValueAtTime(0.0001,ac.currentTime);g.gain.exponentialRampToValueAtTime(0.25,ac.currentTime+0.02);g.gain.exponentialRampToValueAtTime(0.0001,ac.currentTime+0.3);o.connect(g).connect(ac.destination);o.start();o.stop(ac.currentTime+0.32)}catch(e){}}
@@ -384,15 +390,17 @@ function examRun(){
 function board(){
   const v=$(`<div><h2>Bảng điểm</h2><p class="sub">${esc(S.name||'Chưa nhập tên học viên')} · điểm cao nhất của từng hoạt động (%), lưu trên máy này.</p>
   <div class="card"><h3>Thi thử</h3><div id="ex"></div></div>
+  <div class="card" style="margin-top:12px"><h3>Phát âm</h3><div class="tblwrap"><table id="pa"></table></div></div>
   <div class="card" style="margin-top:12px"><h3>Theo bài</h3><div class="tblwrap"><table id="tb"></table></div></div>
   <div class="row" style="margin-top:14px"><button class="btn" id="cp">Sao chép kết quả để gửi giáo viên</button><button class="btn ghost" id="rs">Xóa điểm</button><span class="note" id="msg"></span></div>
   <textarea id="out" rows="6" hidden readonly style="margin-top:10px"></textarea></div>`);
   v.querySelector('#ex').innerHTML=S.exam.length?S.exam.map((r,i)=>`<p>Lần ${i+1} · ${r.d}: <b>${r.t}/300</b> (Nghe ${r.l}, Đọc ${r.r}, Viết ${r.w}) <span class="tag ${r.t>=180?'':'no'}">${r.t>=180?'Đạt':'Chưa đạt'}</span></p>`).join(''):'<p class="note">Chưa làm đề thi thử.</p>';
   v.querySelector('#tb').innerHTML='<tr><th>Bài</th>'+ACTS.map(a=>`<th>${a[1]}</th>`).join('')+'<th>TB</th></tr>'+L.map(l=>{const o=S.les[l.n]||{};return `<tr><td>${l.n}. <span class="han">${esc(l.zh)}</span></td>`+ACTS.map(a=>`<td>${o[a[0]]!==undefined?o[a[0]]:'–'}</td>`).join('')+`<td><b>${lessonPct(l.n)}</b></td></tr>`}).join('');
-  const text=()=>`Kết quả ôn tập HSK 1 3.0 – ${S.name||'Học viên'}\n`+(S.exam.length?S.exam.map((r,i)=>`Thi thử lần ${i+1} (${r.d}): ${r.t}/300 – Nghe ${r.l}, Đọc ${r.r}, Viết ${r.w}`).join('\n')+'\n':'')+L.filter(l=>S.les[l.n]).map(l=>`Bài ${l.n}: ${lessonPct(l.n)}% (`+ACTS.filter(a=>S.les[l.n][a[0]]!==undefined).map(a=>`${a[1]} ${S.les[l.n][a[0]]}`).join(', ')+')').join('\n');
+  const PB=window.PA_BOARD?window.PA_BOARD():[];v.querySelector('#pa').innerHTML='<tr><th>Buổi</th><th>Nội dung</th><th>Bài luyện tập</th><th>BTVN</th></tr>'+PB.map(b=>`<tr><td>Buổi ${b.n}</td><td style="white-space:normal;text-align:left">${esc(b.sub)}</td><td><b>${b.p}%</b></td><td>${b.d.BTVN?'Đã thu':'–'}</td></tr>`).join('');
+  const text=()=>`Kết quả ôn tập HSK 1 3.0 – ${S.name||'Học viên'}\n`+(S.exam.length?S.exam.map((r,i)=>`Thi thử lần ${i+1} (${r.d}): ${r.t}/300 – Nghe ${r.l}, Đọc ${r.r}, Viết ${r.w}`).join('\n')+'\n':'')+PB.filter(b=>Object.keys(b.d).length).map(b=>`Phát âm buổi ${b.n}: ${b.p}%`+(b.d.BTVN?' (đã thu BTVN)':'')+'\n').join('')+L.filter(l=>S.les[l.n]).map(l=>`Bài ${l.n}: ${lessonPct(l.n)}% (`+ACTS.filter(a=>S.les[l.n][a[0]]!==undefined).map(a=>`${a[1]} ${S.les[l.n][a[0]]}`).join(', ')+')').join('\n');
   v.querySelector('#cp').onclick=()=>{const t=text(),out=v.querySelector('#out'),msg=v.querySelector('#msg');out.value=t;const fb=()=>{out.hidden=false;out.select();msg.textContent='Hãy sao chép nội dung trong ô bên dưới.'};
     try{navigator.clipboard.writeText(t).then(()=>{msg.textContent='Đã sao chép.'}).catch(fb)}catch(e){fb()}};
-  let arm=false;v.querySelector('#rs').onclick=e=>{if(!arm){arm=true;e.target.textContent='Bấm lần nữa để xóa hết điểm';return}S.les={};S.exam=[];save();route()};
+  let arm=false;v.querySelector('#rs').onclick=e=>{if(!arm){arm=true;e.target.textContent='Bấm lần nữa để xóa hết điểm';return}S.les={};S.exam=[];S.pa={};save();route()};
   return v}
 
 /* ---------- trang mở đầu ---------- */
@@ -413,6 +421,7 @@ function landing(){const q=QUOTES[0];
       <div><a class="go" href="#bai-hoc">Bắt đầu ôn tập <span aria-hidden="true">→</span></a></div>
     </div>
     <nav class="cards">
+      <a class="card" href="#phat-am"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span><b>Phát âm</b><small>6 buổi · Thanh mẫu, vận mẫu, thanh điệu</small></a>
       <a class="card" href="#bai-hoc"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5M9 7h6"/></svg></span><b>Bài học</b><small>15 bài · từ vựng, nghe, dịch</small></a>
       <a class="card" href="#thi-thu"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4h6M8 4h8v16H8z"/><path d="M11 9h2M11 13h2"/></svg></span><b>Thi thử</b><small>Đề tổng hợp Nghe · Đọc · Viết</small></a>
       <a class="card" href="#bang-diem"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M16 5h3a3 3 0 0 1-3 4M8 5H5a3 3 0 0 0 3 4M12 13v4M8 20h8"/></svg></span><b>Bảng điểm</b><small>Theo dõi tiến bộ của em</small></a>
@@ -427,10 +436,12 @@ function landing(){const q=QUOTES[0];
 /* ---------- router ---------- */
 function route(){run++;stopClip();const h=(location.hash||'').slice(1);let v;document.body.classList.toggle('landing',h===''||h==='trang-dau');if(h===''||h==='trang-dau'){app.replaceChildren(landing());window.scrollTo(0,0);return}
   const m=h.match(/^bai-(\d+)$/);
-  if(m)v=lesson(+m[1]);else if(h==='thi-thu')v=exam();else if(h==='bang-diem')v=board();else v=home();
+  const pa=/^phat-am/.test(h);
+  if(pa&&window.PAV)v=window.PAV(h);else if(m)v=lesson(+m[1]);else if(h==='thi-thu')v=exam();else if(h==='bang-diem')v=board();else v=home();
   document.getElementById('nav-home').classList.toggle('on',!!m||h==='bai-hoc');
   document.getElementById('nav-exam').classList.toggle('on',h==='thi-thu');
   document.getElementById('nav-score').classList.toggle('on',h==='bang-diem');
+  document.getElementById('nav-pa').classList.toggle('on',pa);
   app.replaceChildren(v);window.scrollTo(0,0)}
 window.addEventListener('hashchange',route);route();
 })();
